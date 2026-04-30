@@ -1,4 +1,3 @@
-package bitcoin.script;
 
 import java.util.*;
 import java.nio.charset.StandardCharsets;
@@ -46,25 +45,29 @@ public class ScriptInterpreter {
      * @return true si la validación es exitosa
      * @throws ScriptException si hay error en la ejecución
      */
-    public boolean executeWithScripts(String scriptSig, String scriptPubKey) throws ScriptException {
-        if (traceMode) {
-            System.out.println("=== Iniciando ejecución de scripts ===");
-            System.out.println("ScriptSig: " + scriptSig);
-            System.out.println("ScriptPubKey: " + scriptPubKey);
-            System.out.println();
-        }
-        
-        // Ejecutar scriptSig primero
-        if (traceMode) System.out.println("--- Ejecutando scriptSig ---");
-        execute(scriptSig);
-        
-        // Luego ejecutar scriptPubKey
-        if (traceMode) System.out.println("\n--- Ejecutando scriptPubKey ---");
-        execute(scriptPubKey);
-        
-        // Validar resultado final
-        return validateFinalStack();
+   public boolean executeWithScripts(String scriptSig, String scriptPubKey) throws ScriptException {
+    if (traceMode) {
+        System.out.println("=== Iniciando ejecución de scripts ===");
+        System.out.println("ScriptSig: " + scriptSig);
+        System.out.println("ScriptPubKey: " + scriptPubKey);
+        System.out.println();
     }
+
+    // Ejecutar scriptSig
+    if (traceMode) System.out.println("--- Ejecutando scriptSig ---");
+    execute(scriptSig);
+
+    // Ejecutar scriptPubKey
+    if (traceMode) System.out.println("\n--- Ejecutando scriptPubKey ---");
+    execute(scriptPubKey);
+
+    // 🔥 VALIDACIÓN FINAL SOLO AQUÍ
+    if (mainStack.isEmpty()) {
+        throw new ScriptException("Stack vacío al final de la ejecución", "FINAL");
+    }
+
+    return validateFinalStack();
+}
     
     /**
      * Ejecuta un script individual
@@ -73,31 +76,40 @@ public class ScriptInterpreter {
      * @return true si la ejecución fue exitosa
      * @throws ScriptException si hay error en la ejecución
      */
-    public boolean execute(String script) throws ScriptException {
-        // Tokenizar el script usando ArrayList para acceso O(1)
-        List<String> tokens = tokenize(script);
-        
-        int i = 0;
-        while (i < tokens.size()) {
-            String token = tokens.get(i);
-            
-            if (traceMode) {
-                System.out.println("Instrucción #" + (++instructionCount) + ": " + token);
-            }
-            
-            // Procesar el token
-            processToken(token);
-            
-            if (traceMode) {
-                printStack();
-                System.out.println();
-            }
-            
-            i++;
-        }
-        
+public boolean execute(String script) throws ScriptException {
+    // Caso especial: script vacío
+    if (script == null || script.trim().isEmpty()) {
         return true;
     }
+
+    List<String> tokens = tokenize(script);
+
+    int i = 0;
+    while (i < tokens.size()) {
+        String token = tokens.get(i);
+
+        if (traceMode) {
+            System.out.println("Instrucción #" + (++instructionCount) + ": " + token);
+        }
+
+        processToken(token);
+
+        if (traceMode) {
+            printStack();
+            System.out.println();
+        }
+
+        i++;
+    }
+
+    // 🔥 CLAVE: manejar stack vacío
+    if (mainStack.isEmpty()) {
+        return true;
+    }
+
+    return validateFinalStack();
+}
+    
     
     /**
      * Tokeniza el script en instrucciones individuales
@@ -220,6 +232,15 @@ public class ScriptInterpreter {
         mainStack.push(a);
         mainStack.push(b);
     }
+
+    private void opOver() throws ScriptException {
+    if (mainStack.size() < 2) {
+        throw new ScriptException("Stack insuficiente para OP_OVER", "OP_OVER");
+    }
+
+    byte[] second = mainStack.get(mainStack.size() - 2);
+    mainStack.push(Arrays.copyOf(second, second.length));
+}
 
     // Negación lógica
     private void opNot() throws ScriptException {
@@ -435,15 +456,8 @@ public class ScriptInterpreter {
         }
         
         byte[] top = mainStack.peek();
-        boolean result = isTrue(top);
         
-        if (traceMode) {
-            System.out.println("\n=== Resultado Final ===");
-            System.out.println("Stack top: " + bytesToHex(top));
-            System.out.println("Validación: " + (result ? "EXITOSA ✓" : "FALLIDA ✗"));
-        }
-        
-        return result;
+        return isTrue(top);
     }
     
     /**

@@ -1,4 +1,3 @@
-package bitcoin.script;
 
 /**
  * Excepción personalizada para errores en la ejecución de Bitcoin Script
