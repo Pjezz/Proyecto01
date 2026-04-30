@@ -310,4 +310,16 @@ public void testOP_SUB() throws ScriptException {
     interpreter.execute("OP_5 OP_3 OP_SUB");
     assertEquals(1, interpreter.getStackSize());
 }
+
+@Test
+public void testLessThan() throws ScriptException {
+    interpreter.execute("OP_2 OP_3 OP_LESSTHAN");
+    assertEquals(1, interpreter.getStackSize());
+}
+
+@Test
+public void testGreaterThan() throws ScriptException {
+    interpreter.execute("OP_5 OP_3 OP_GREATERTHAN");
+    assertEquals(1, interpreter.getStackSize());
+}
 }

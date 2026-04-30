@@ -212,6 +212,21 @@ public boolean execute(String script) throws ScriptException {
             case "OP_BOOLOR":
                 opBoolOr();
                 break;
+            case "OP_LESSTHAN":
+                opLessThan();
+                break;
+            case "OP_GREATERTHAN":
+                opGreaterThan();
+                break;
+            case "OP_LESSTHANOREQUAL":
+                opLessThanOrEqual();
+                break;
+            case "OP_GREATERTHANOREQUAL":
+                opGreaterThanOrEqual();
+                break;
+            case "OP_NUMEQUALVERIFY":
+                opNumEqualVerify();
+                break;
             default:
                 throw new ScriptException("Opcode no reconocido: " + token, token);
         }
@@ -571,5 +586,62 @@ private void opSub() throws ScriptException {
     int result = b - a;
 
     mainStack.push(encodeNumber(result));
+}
+
+private void opLessThan() throws ScriptException {
+    if (mainStack.size() < 2) {
+        throw new ScriptException("Stack insuficiente para OP_LESSTHAN", "OP_LESSTHAN");
+    }
+
+    int a = decodeNumber(mainStack.pop());
+    int b = decodeNumber(mainStack.pop());
+
+    mainStack.push((b < a) ? new byte[]{1} : new byte[0]);
+}
+
+private void opGreaterThan() throws ScriptException {
+    if (mainStack.size() < 2) {
+        throw new ScriptException("Stack insuficiente para OP_GREATERTHAN", "OP_GREATERTHAN");
+    }
+
+    int a = decodeNumber(mainStack.pop());
+    int b = decodeNumber(mainStack.pop());
+
+    mainStack.push((b > a) ? new byte[]{1} : new byte[0]);
+}
+
+private void opLessThanOrEqual() throws ScriptException {
+    if (mainStack.size() < 2) {
+        throw new ScriptException("Stack insuficiente para OP_LESSTHANOREQUAL", "OP_LESSTHANOREQUAL");
+    }
+
+    int a = decodeNumber(mainStack.pop());
+    int b = decodeNumber(mainStack.pop());
+
+    mainStack.push((b <= a) ? new byte[]{1} : new byte[0]);
+}
+
+private void opGreaterThanOrEqual() throws ScriptException {
+    if (mainStack.size() < 2) {
+        throw new ScriptException("Stack insuficiente para OP_GREATERTHANOREQUAL", "OP_GREATERTHANOREQUAL");
+    }
+
+    int a = decodeNumber(mainStack.pop());
+    int b = decodeNumber(mainStack.pop());
+
+    mainStack.push((b >= a) ? new byte[]{1} : new byte[0]);
+}
+
+private void opNumEqualVerify() throws ScriptException {
+    if (mainStack.size() < 2) {
+        throw new ScriptException("Stack insuficiente para OP_NUMEQUALVERIFY", "OP_NUMEQUALVERIFY");
+    }
+
+    int a = decodeNumber(mainStack.pop());
+    int b = decodeNumber(mainStack.pop());
+
+    if (a != b) {
+        throw new ScriptException("OP_NUMEQUALVERIFY falló", "OP_NUMEQUALVERIFY");
+    }
 }
 }
