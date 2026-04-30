@@ -252,10 +252,18 @@ public boolean execute(String script) throws ScriptException {
             case "OP_ENDIF":
                 opEndIf();
                 break;
+            case "OP_NOTIF":
+                opNotIf();
+                break;
+            case "OP_ELSE":
+                opElse();
+                break;
             default:
                 throw new ScriptException("Opcode no reconocido: " + token, token);
         }
     }
+
+    
     
     /**
      * OP_DUP: Duplica el elemento en la cima de la pila
@@ -280,6 +288,8 @@ public boolean execute(String script) throws ScriptException {
         mainStack.push(a);
         mainStack.push(b);
     }
+
+    
 
     private void opOver() throws ScriptException {
     if (mainStack.size() < 2) {
@@ -399,6 +409,24 @@ public boolean execute(String script) throws ScriptException {
         
         mainStack.push(valid ? new byte[]{1} : new byte[0]);
     }
+
+    private void opNotIf() throws ScriptException {
+    if (mainStack.isEmpty()) {
+        throw new ScriptException("Stack vacío para OP_NOTIF", "OP_NOTIF");
+    }
+
+    boolean condition = !isTrue(mainStack.pop());
+    executionStack.push(condition);
+}
+
+private void opElse() throws ScriptException {
+    if (executionStack.isEmpty()) {
+        throw new ScriptException("OP_ELSE sin OP_IF", "OP_ELSE");
+    }
+
+    boolean current = executionStack.pop();
+    executionStack.push(!current);
+}
     
     /**
      * Verifica si un byte array representa un valor verdadero

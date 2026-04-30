@@ -334,4 +334,22 @@ public void testIfFalse() throws ScriptException {
     interpreter.execute("OP_0 OP_IF OP_2 OP_ENDIF");
     assertEquals(0, interpreter.getStackSize());
 }
+
+@Test
+public void testIfElseTrue() throws ScriptException {
+    interpreter.execute("OP_1 OP_IF OP_2 OP_ELSE OP_3 OP_ENDIF");
+    assertEquals(1, interpreter.getStackSize());
+}
+
+@Test
+public void testIfElseFalse() throws ScriptException {
+    interpreter.execute("OP_0 OP_IF OP_2 OP_ELSE OP_3 OP_ENDIF");
+    assertEquals(1, interpreter.getStackSize());
+}
+
+@Test
+public void testNotIf() throws ScriptException {
+    interpreter.execute("OP_0 OP_NOTIF OP_2 OP_ENDIF");
+    assertEquals(1, interpreter.getStackSize());
+}
 }
