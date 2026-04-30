@@ -146,6 +146,41 @@ public class ScriptInterpreterTest {
     }
     
     @Test
+    @DisplayName("OP_SWAP intercambia elementos")
+    public void testOP_SWAP() throws ScriptException {
+        interpreter.execute("OP_1 OP_2 OP_SWAP");
+        assertEquals(2, interpreter.getStackSize());
+    }
+
+    @Test
+    @DisplayName("OP_OVER duplica el segundo elemento")
+    public void testOP_OVER() throws ScriptException {
+        interpreter.execute("OP_1 OP_2 OP_OVER");
+        assertEquals(3, interpreter.getStackSize());
+    }
+
+    @Test
+    @DisplayName("OP_NOT invierte valor lógico")
+    public void testOP_NOT() throws ScriptException {
+        interpreter.execute("OP_1 OP_NOT");
+        assertEquals(1, interpreter.getStackSize());
+    }
+
+    @Test
+    @DisplayName("OP_BOOLAND funciona correctamente")
+    public void testOP_BOOLAND() throws ScriptException {
+        interpreter.execute("OP_1 OP_1 OP_BOOLAND");
+        assertEquals(1, interpreter.getStackSize());
+    }
+
+    @Test
+    @DisplayName("OP_BOOLOR funciona correctamente")
+    public void testOP_BOOLOR() throws ScriptException {
+        interpreter.execute("OP_0 OP_1 OP_BOOLOR");
+        assertEquals(1, interpreter.getStackSize());
+    }
+
+    @Test
     @DisplayName("OP_HASH160 produce hashes consistentes")
     public void testOP_HASH160_Consistency() throws ScriptException {
         interpreter.execute("<test> OP_HASH160");

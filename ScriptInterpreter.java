@@ -177,6 +177,21 @@ public class ScriptInterpreter {
             case "OP_CHECKSIG":
                 opCheckSig();
                 break;
+            case "OP_SWAP":
+                opSwap();
+                break;
+            case "OP_OVER":
+                opOver();
+                break;
+            case "OP_NOT":
+                opNot();
+                break;
+            case "OP_BOOLAND":
+                opBoolAnd();
+                break;
+            case "OP_BOOLOR":
+                opBoolOr();
+                break;
             default:
                 throw new ScriptException("Opcode no reconocido: " + token, token);
         }
@@ -193,7 +208,57 @@ public class ScriptInterpreter {
         byte[] top = mainStack.peek();
         mainStack.push(Arrays.copyOf(top, top.length));
     }
+    // Intercambia los dos elementos superiores
+    private void opSwap() throws ScriptException {
+        if (mainStack.size() < 2) {
+            throw new ScriptException("Stack insuficiente para OP_SWAP", "OP_SWAP");
+        }
+
+        byte[] a = mainStack.pop();
+        byte[] b = mainStack.pop();
+
+        mainStack.push(a);
+        mainStack.push(b);
+    }
+
+    // Negación lógica
+    private void opNot() throws ScriptException {
+        if (mainStack.isEmpty()) {
+            throw new ScriptException("Stack vacío para OP_NOT", "OP_NOT");
+        }
+
+        byte[] value = mainStack.pop();
+        boolean result = !isTrue(value);
+
+        mainStack.push(result ? new byte[]{1} : new byte[0]);
+    }
+
+    // AND lógico
+    private void opBoolAnd() throws ScriptException {
+        if (mainStack.size() < 2) {
+            throw new ScriptException("Stack insuficiente para OP_BOOLAND", "OP_BOOLAND");
+        }
+
+        boolean a = isTrue(mainStack.pop());
+        boolean b = isTrue(mainStack.pop());
+
+        mainStack.push((a && b) ? new byte[]{1} : new byte[0]);
+    }
     
+    // OR lógico
+    private void opBoolOr() throws ScriptException {
+        if (mainStack.size() < 2) {
+            throw new ScriptException("Stack insuficiente para OP_BOOLOR", "OP_BOOLOR");
+        }
+
+            boolean a = isTrue(mainStack.pop());
+            boolean b = isTrue(mainStack.pop());
+
+            mainStack.push((a || b) ? new byte[]{1} : new byte[0]);
+    }
+
+
+
     /**
      * OP_DROP: Elimina el elemento en la cima de la pila
      * Complejidad: O(1) - pop() es O(1) en Stack
