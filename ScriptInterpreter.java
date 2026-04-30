@@ -94,6 +94,8 @@ public boolean execute(String script) throws ScriptException {
 
         processToken(token);
 
+        
+
         if (traceMode) {
             printStack();
             System.out.println();
@@ -179,6 +181,12 @@ public boolean execute(String script) throws ScriptException {
                 break;
             case "OP_EQUAL":
                 opEqual();
+                break;
+            case "OP_ADD":
+                 opAdd();
+                break;
+            case "OP_SUB":
+                opSub();
                 break;
             case "OP_EQUALVERIFY":
                 opEqualVerify();
@@ -520,4 +528,48 @@ public boolean execute(String script) throws ScriptException {
         mainStack.clear();
         instructionCount = 0;
     }
+
+    private int decodeNumber(byte[] data) {
+    if (data.length == 0) return 0;
+
+    int result = 0;
+
+    for (int i = 0; i < data.length; i++) {
+        result |= (data[i] & 0xff) << (8 * i);
+    }
+
+    // Revisar signo (último byte)
+    if ((data[data.length - 1] & 0x80) != 0) {
+        result &= ~(0x80 << (8 * (data.length - 1)));
+        result = -result;
+    }
+
+    return result;
+}
+
+private void opAdd() throws ScriptException {
+    if (mainStack.size() < 2) {
+        throw new ScriptException("Stack insuficiente para OP_ADD", "OP_ADD");
+    }
+
+    int a = decodeNumber(mainStack.pop());
+    int b = decodeNumber(mainStack.pop());
+
+    int result = a + b;
+
+    mainStack.push(encodeNumber(result));
+}
+
+private void opSub() throws ScriptException {
+    if (mainStack.size() < 2) {
+        throw new ScriptException("Stack insuficiente para OP_SUB", "OP_SUB");
+    }
+
+    int a = decodeNumber(mainStack.pop());
+    int b = decodeNumber(mainStack.pop());
+
+    int result = b - a;
+
+    mainStack.push(encodeNumber(result));
+}
 }

@@ -298,4 +298,16 @@ public class ScriptInterpreterTest {
         boolean result = interpreter.execute(script);
         assertFalse(result);
     }
+
+    @Test
+public void testOP_ADD() throws ScriptException {
+    interpreter.execute("OP_2 OP_3 OP_ADD");
+    assertEquals(1, interpreter.getStackSize());
+}
+
+@Test
+public void testOP_SUB() throws ScriptException {
+    interpreter.execute("OP_5 OP_3 OP_SUB");
+    assertEquals(1, interpreter.getStackSize());
+}
 }
