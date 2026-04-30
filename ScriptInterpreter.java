@@ -26,6 +26,8 @@ public class ScriptInterpreter {
     
     /** Contador de instrucciones ejecutadas */
     private int instructionCount;
+
+    private Stack<Boolean> executionStack = new Stack<>();
     
     /**
      * Constructor del intérprete
@@ -35,6 +37,13 @@ public class ScriptInterpreter {
         this.mainStack = new Stack<>();
         this.traceMode = traceMode;
         this.instructionCount = 0;
+    }
+
+    private boolean shouldExecute() {
+        for (Boolean condition : executionStack) {
+            if (!condition) return false;
+        }   
+        return true;
     }
     
     /**
@@ -151,6 +160,16 @@ public boolean execute(String script) throws ScriptException {
      * @throws ScriptException si el opcode no es reconocido o falla
      */
     private void processToken(String token) throws ScriptException {
+
+        if (!shouldExecute()) {
+            if (token.equals("OP_IF") || token.equals("OP_NOTIF") || 
+                token.equals("OP_ELSE") || token.equals("OP_ENDIF")) {
+            // permitir que estos pasen
+            }  else {
+                return; // ignorar todo lo demás
+            }
+        }
+
         // Datos entre <>
         if (token.startsWith("<") && token.endsWith(">")) {
             String data = token.substring(1, token.length() - 1);
@@ -226,6 +245,12 @@ public boolean execute(String script) throws ScriptException {
                 break;
             case "OP_NUMEQUALVERIFY":
                 opNumEqualVerify();
+                break;
+            case "OP_IF":
+                opIf();
+                break;
+            case "OP_ENDIF":
+                opEndIf();
                 break;
             default:
                 throw new ScriptException("Opcode no reconocido: " + token, token);
@@ -644,4 +669,23 @@ private void opNumEqualVerify() throws ScriptException {
         throw new ScriptException("OP_NUMEQUALVERIFY falló", "OP_NUMEQUALVERIFY");
     }
 }
+
+private void opIf() throws ScriptException {
+    if (mainStack.isEmpty()) {
+        throw new ScriptException("Stack vacío para OP_IF", "OP_IF");
+    }
+
+    boolean condition = isTrue(mainStack.pop());
+    executionStack.push(condition);
+}
+
+private void opEndIf() throws ScriptException {
+    if (executionStack.isEmpty()) {
+        throw new ScriptException("OP_ENDIF sin OP_IF", "OP_ENDIF");
+    }
+
+    executionStack.pop();
+}
+
+
 }

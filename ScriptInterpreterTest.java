@@ -322,4 +322,16 @@ public void testGreaterThan() throws ScriptException {
     interpreter.execute("OP_5 OP_3 OP_GREATERTHAN");
     assertEquals(1, interpreter.getStackSize());
 }
+
+@Test
+public void testIfTrue() throws ScriptException {
+    interpreter.execute("OP_1 OP_IF OP_2 OP_ENDIF");
+    assertEquals(1, interpreter.getStackSize());
+}
+
+@Test
+public void testIfFalse() throws ScriptException {
+    interpreter.execute("OP_0 OP_IF OP_2 OP_ENDIF");
+    assertEquals(0, interpreter.getStackSize());
+}
 }
