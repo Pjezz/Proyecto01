@@ -117,8 +117,6 @@ public class ScriptInterpreter {
 
         i++;
     }
-
-    // 🔥 CLAVE: manejar stack vacío
         if (mainStack.isEmpty()) {
             return true;
         }
