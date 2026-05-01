@@ -1,8 +1,8 @@
 /**
- * Excepción personalizada para errores en la ejecución de Bitcoin Script
+ * Clase que representa errores durante la ejecución del script.
  * 
- * @author Grupo #[X]
- * @version Fase 1 - Febrero 2026
+ * Se utiliza para manejar fallos en opcodes o condiciones inválidas.
+ * @author Antony Barrios 
  */
 public class ScriptException extends Exception {
     

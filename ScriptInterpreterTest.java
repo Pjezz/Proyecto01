@@ -2,19 +2,9 @@ import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Pruebas unitarias para el intérprete de Bitcoin Script - Fase 1
+ * Clase de pruebas para validar el funcionamiento del intérprete.
  * 
- * Cobertura de pruebas:
- * - Opcodes básicos (OP_0, OP_1-16, PUSHDATA)
- * - Operaciones de pila (OP_DUP, OP_DROP)
- * - Comparaciones (OP_EQUAL, OP_EQUALVERIFY)
- * - Criptografía (OP_HASH160)
- * - Firmas (OP_CHECKSIG)
- * - Casos borde (pila vacía, errores)
- * - Flujo P2PKH completo
- * 
- * @author Grupo #[X]
- * @version Fase 1 - Febrero 2026
+ * Incluye casos básicos, errores y validación de scripts completos.
  */
 public class ScriptInterpreterTest {
     

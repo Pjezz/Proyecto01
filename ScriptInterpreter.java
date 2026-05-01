@@ -4,16 +4,18 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 /**
- * Intérprete de Bitcoin Script - Prototipo Fase 1
- * Implementa un subconjunto mínimo de opcodes para validación de transacciones P2PKH
+ * Intérprete simplificado de Bitcoin Script basado en pila.
  * 
- * Estructuras de datos utilizadas:
- * - Stack<byte[]>: Pila principal para operaciones. O(1) para push/pop/peek.
- *   Elegida por ser la estructura nativa de Bitcoin Script (stack-based language).
- * - ArrayList<String>: Para tokenizar el script. O(1) acceso por índice.
+ * Este programa permite ejecutar scripts de validación de transacciones
+ * simulando el comportamiento del lenguaje Bitcoin Script.
  * 
- * @author Grupo #[X]
- * @version Fase 1 - Febrero 2026
+ * Se implementan operaciones básicas de pila, lógica, aritmética,
+ * comparaciones y control de flujo.
+ * 
+ * Nota: La verificación criptográfica es simulada (mock).
+ * 
+ * @author Autony Barrios
+ * @version Fase 2 - 2026
  */
 public class ScriptInterpreter {
     
@@ -78,12 +80,16 @@ public class ScriptInterpreter {
     }
     
     /**
-     * Ejecuta un script individual
-     * 
-     * @param script string con las instrucciones separadas por espacios
-     * @return true si la ejecución fue exitosa
-     * @throws ScriptException si hay error en la ejecución
-     */
+    * Ejecuta un script individual de Bitcoin Script.
+    * 
+    * El script se procesa de izquierda a derecha y cada token
+    * es interpretado como un opcode o dato.
+    * 
+    * @param script instrucciones separadas por espacios
+    * @return true si el resultado final es válido
+    * @throws ScriptException si ocurre un error durante la ejecución
+    */
+
     public boolean execute(String script) throws ScriptException {
         // Caso especial: script vacío
         if (script == null || script.trim().isEmpty()) {
@@ -153,11 +159,12 @@ public class ScriptInterpreter {
     }
     
     /**
-     * Procesa un token individual (opcode o dato)
-     * 
-     * @param token token a procesar
-     * @throws ScriptException si el opcode no es reconocido o falla
-     */
+    * Procesa un token individual del script.
+    * Puede ser un opcode o un valor de datos.
+    * 
+    * @param token elemento a interpretar
+    * @throws ScriptException si el opcode no es válido
+    */
     private void processToken(String token) throws ScriptException {
 
         if (!shouldExecute()) {
@@ -423,7 +430,11 @@ public class ScriptInterpreter {
         boolean condition = !isTrue(mainStack.pop());
         executionStack.push(condition);
     }
-
+    /**
+    * Invierte la condición del bloque IF actual.
+    * 
+    * Se utiliza dentro de estructuras IF/ELSE.
+    */
     private void opElse() throws ScriptException {
         if (executionStack.isEmpty()) {
             throw new ScriptException("OP_ELSE sin OP_IF", "OP_ELSE");
@@ -433,6 +444,11 @@ public class ScriptInterpreter {
         executionStack.push(!current);
     }
 
+    /**
+    * Verifica que el valor superior de la pila sea verdadero.
+    * 
+    * Si es falso, se lanza una excepción.
+    */
     private void opVerify() throws ScriptException {
         if (mainStack.isEmpty()) {
             throw new ScriptException("Stack vacío para OP_VERIFY", "OP_VERIFY");
@@ -617,6 +633,11 @@ public class ScriptInterpreter {
         instructionCount = 0;
     }
 
+    /**
+    * Convierte un byte array a entero.
+    * 
+    * Nota: Implementación simplificada para el proyecto.
+    */
     private int decodeNumber(byte[] data) {
         if (data.length == 0) return 0;
 
@@ -635,6 +656,11 @@ public class ScriptInterpreter {
         return result;
     }
 
+    /**
+    * Suma los dos valores superiores de la pila.
+    * 
+    * Nota: Implementación básica, no considera overflow.
+    */
     private void opAdd() throws ScriptException {
         if (mainStack.size() < 2) {
             throw new ScriptException("Stack insuficiente para OP_ADD", "OP_ADD");
@@ -648,6 +674,11 @@ public class ScriptInterpreter {
         mainStack.push(encodeNumber(result));
     }
 
+    /**
+    * Resta los dos valores superiores de la pila.
+    * 
+    * El orden es importante: segundo - primero.
+    */
     private void opSub() throws ScriptException {
         if (mainStack.size() < 2) {
             throw new ScriptException("Stack insuficiente para OP_SUB", "OP_SUB");
@@ -718,7 +749,12 @@ public class ScriptInterpreter {
         }
     }
 
-
+    /**
+    * Inicia un bloque condicional IF.
+    * 
+    * Evalúa el valor superior de la pila y decide si
+    * se ejecutarán las instrucciones siguientes.
+    */
     private void opIf() throws ScriptException {
         if (mainStack.isEmpty()) {
             throw new ScriptException("Stack vacío para OP_IF", "OP_IF");
