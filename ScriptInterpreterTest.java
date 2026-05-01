@@ -1,4 +1,3 @@
-
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -300,56 +299,76 @@ public class ScriptInterpreterTest {
     }
 
     @Test
-public void testOP_ADD() throws ScriptException {
-    interpreter.execute("OP_2 OP_3 OP_ADD");
-    assertEquals(1, interpreter.getStackSize());
-}
+    public void testOP_ADD() throws ScriptException {
+        interpreter.execute("OP_2 OP_3 OP_ADD");
+        assertEquals(1, interpreter.getStackSize());
+    }   
 
-@Test
-public void testOP_SUB() throws ScriptException {
-    interpreter.execute("OP_5 OP_3 OP_SUB");
-    assertEquals(1, interpreter.getStackSize());
-}
+    @Test
+    public void testOP_SUB() throws ScriptException {
+        interpreter.execute("OP_5 OP_3 OP_SUB");
+        assertEquals(1, interpreter.getStackSize());
+    }
 
-@Test
-public void testLessThan() throws ScriptException {
-    interpreter.execute("OP_2 OP_3 OP_LESSTHAN");
-    assertEquals(1, interpreter.getStackSize());
-}
+    @Test
+    public void testLessThan() throws ScriptException {
+        interpreter.execute("OP_2 OP_3 OP_LESSTHAN");
+        assertEquals(1, interpreter.getStackSize());
+    }
 
-@Test
-public void testGreaterThan() throws ScriptException {
-    interpreter.execute("OP_5 OP_3 OP_GREATERTHAN");
-    assertEquals(1, interpreter.getStackSize());
-}
+    @Test
+    public void testGreaterThan() throws ScriptException {
+        interpreter.execute("OP_5 OP_3 OP_GREATERTHAN");
+        assertEquals(1, interpreter.getStackSize());
+    }
 
-@Test
-public void testIfTrue() throws ScriptException {
-    interpreter.execute("OP_1 OP_IF OP_2 OP_ENDIF");
-    assertEquals(1, interpreter.getStackSize());
-}
+    @Test
+    public void testIfTrue() throws ScriptException {
+        interpreter.execute("OP_1 OP_IF OP_2 OP_ENDIF");
+        assertEquals(1, interpreter.getStackSize());
+    }
 
-@Test
-public void testIfFalse() throws ScriptException {
-    interpreter.execute("OP_0 OP_IF OP_2 OP_ENDIF");
-    assertEquals(0, interpreter.getStackSize());
-}
+    @Test
+    public void testIfFalse() throws ScriptException {
+        interpreter.execute("OP_0 OP_IF OP_2 OP_ENDIF");
+        assertEquals(0, interpreter.getStackSize());
+    }
 
-@Test
-public void testIfElseTrue() throws ScriptException {
-    interpreter.execute("OP_1 OP_IF OP_2 OP_ELSE OP_3 OP_ENDIF");
-    assertEquals(1, interpreter.getStackSize());
-}
+    @Test
+    public void testIfElseTrue() throws ScriptException {
+        interpreter.execute("OP_1 OP_IF OP_2 OP_ELSE OP_3 OP_ENDIF");
+        assertEquals(1, interpreter.getStackSize());
+    }
 
-@Test
-public void testIfElseFalse() throws ScriptException {
-    interpreter.execute("OP_0 OP_IF OP_2 OP_ELSE OP_3 OP_ENDIF");
-    assertEquals(1, interpreter.getStackSize());
-}
+    @Test
+    public void testIfElseFalse() throws ScriptException {
+        interpreter.execute("OP_0 OP_IF OP_2 OP_ELSE OP_3 OP_ENDIF");
+        assertEquals(1, interpreter.getStackSize());
+    }
 
-@Test
-public void testNotIf() throws ScriptException {
-    interpreter.execute("OP_0 OP_NOTIF OP_2 OP_ENDIF");
-    assertEquals(1, interpreter.getStackSize());
-}
+    @Test
+    public void testNotIf() throws ScriptException {
+        interpreter.execute("OP_0 OP_NOTIF OP_2 OP_ENDIF");
+        assertEquals(1, interpreter.getStackSize());
+    }
+
+    @Test
+    public void testVerifySuccess() throws ScriptException {
+        interpreter.execute("OP_1 OP_VERIFY");
+        assertEquals(0, interpreter.getStackSize());
+    }
+
+    @Test
+    public void testVerifyFail() {
+        assertThrows(ScriptException.class, () -> {
+        interpreter.execute("OP_0 OP_VERIFY");
+        });
+    }
+
+    @Test
+    public void testReturnAlwaysFails() {
+        assertThrows(ScriptException.class, () -> {
+        interpreter.execute("OP_RETURN");
+        });
+    }
 }

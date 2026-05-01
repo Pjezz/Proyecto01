@@ -1,4 +1,3 @@
-
 import java.util.*;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -55,28 +54,28 @@ public class ScriptInterpreter {
      * @throws ScriptException si hay error en la ejecución
      */
    public boolean executeWithScripts(String scriptSig, String scriptPubKey) throws ScriptException {
-    if (traceMode) {
-        System.out.println("=== Iniciando ejecución de scripts ===");
-        System.out.println("ScriptSig: " + scriptSig);
-        System.out.println("ScriptPubKey: " + scriptPubKey);
-        System.out.println();
+        if (traceMode) {
+            System.out.println("=== Iniciando ejecución de scripts ===");
+            System.out.println("ScriptSig: " + scriptSig);
+            System.out.println("ScriptPubKey: " + scriptPubKey);
+            System.out.println();
+        }
+
+        // Ejecutar scriptSig
+        if (traceMode) System.out.println("--- Ejecutando scriptSig ---");
+        execute(scriptSig);
+
+        // Ejecutar scriptPubKey
+        if (traceMode) System.out.println("\n--- Ejecutando scriptPubKey ---");
+        execute(scriptPubKey);
+
+        // 🔥 VALIDACIÓN FINAL SOLO AQUÍ
+        if (mainStack.isEmpty()) {
+            throw new ScriptException("Stack vacío al final de la ejecución", "FINAL");
+        }
+
+        return validateFinalStack();
     }
-
-    // Ejecutar scriptSig
-    if (traceMode) System.out.println("--- Ejecutando scriptSig ---");
-    execute(scriptSig);
-
-    // Ejecutar scriptPubKey
-    if (traceMode) System.out.println("\n--- Ejecutando scriptPubKey ---");
-    execute(scriptPubKey);
-
-    // 🔥 VALIDACIÓN FINAL SOLO AQUÍ
-    if (mainStack.isEmpty()) {
-        throw new ScriptException("Stack vacío al final de la ejecución", "FINAL");
-    }
-
-    return validateFinalStack();
-}
     
     /**
      * Ejecuta un script individual
@@ -85,11 +84,11 @@ public class ScriptInterpreter {
      * @return true si la ejecución fue exitosa
      * @throws ScriptException si hay error en la ejecución
      */
-public boolean execute(String script) throws ScriptException {
-    // Caso especial: script vacío
-    if (script == null || script.trim().isEmpty()) {
-        return true;
-    }
+    public boolean execute(String script) throws ScriptException {
+        // Caso especial: script vacío
+        if (script == null || script.trim().isEmpty()) {
+            return true;
+        }
 
     List<String> tokens = tokenize(script);
 
@@ -114,12 +113,12 @@ public boolean execute(String script) throws ScriptException {
     }
 
     // 🔥 CLAVE: manejar stack vacío
-    if (mainStack.isEmpty()) {
-        return true;
-    }
+        if (mainStack.isEmpty()) {
+            return true;
+        }
 
-    return validateFinalStack();
-}
+        return validateFinalStack();
+    }
     
     
     /**
@@ -258,6 +257,12 @@ public boolean execute(String script) throws ScriptException {
             case "OP_ELSE":
                 opElse();
                 break;
+            case "OP_VERIFY":
+                opVerify();
+                break;
+            case "OP_RETURN":
+                opReturn();
+                break;
             default:
                 throw new ScriptException("Opcode no reconocido: " + token, token);
         }
@@ -292,13 +297,13 @@ public boolean execute(String script) throws ScriptException {
     
 
     private void opOver() throws ScriptException {
-    if (mainStack.size() < 2) {
-        throw new ScriptException("Stack insuficiente para OP_OVER", "OP_OVER");
-    }
+        if (mainStack.size() < 2) {
+            throw new ScriptException("Stack insuficiente para OP_OVER", "OP_OVER");
+        }
 
-    byte[] second = mainStack.get(mainStack.size() - 2);
-    mainStack.push(Arrays.copyOf(second, second.length));
-}
+        byte[] second = mainStack.get(mainStack.size() - 2);
+        mainStack.push(Arrays.copyOf(second, second.length));
+    }
 
     // Negación lógica
     private void opNot() throws ScriptException {
@@ -411,22 +416,37 @@ public boolean execute(String script) throws ScriptException {
     }
 
     private void opNotIf() throws ScriptException {
-    if (mainStack.isEmpty()) {
-        throw new ScriptException("Stack vacío para OP_NOTIF", "OP_NOTIF");
+        if (mainStack.isEmpty()) {
+            throw new ScriptException("Stack vacío para OP_NOTIF", "OP_NOTIF");
+        }
+
+        boolean condition = !isTrue(mainStack.pop());
+        executionStack.push(condition);
     }
 
-    boolean condition = !isTrue(mainStack.pop());
-    executionStack.push(condition);
-}
+    private void opElse() throws ScriptException {
+        if (executionStack.isEmpty()) {
+            throw new ScriptException("OP_ELSE sin OP_IF", "OP_ELSE");
+        }
 
-private void opElse() throws ScriptException {
-    if (executionStack.isEmpty()) {
-        throw new ScriptException("OP_ELSE sin OP_IF", "OP_ELSE");
+        boolean current = executionStack.pop();
+        executionStack.push(!current);
     }
 
-    boolean current = executionStack.pop();
-    executionStack.push(!current);
-}
+    private void opVerify() throws ScriptException {
+        if (mainStack.isEmpty()) {
+            throw new ScriptException("Stack vacío para OP_VERIFY", "OP_VERIFY");
+        }
+
+        byte[] value = mainStack.pop();
+        if (!isTrue(value)) {
+            throw new ScriptException("OP_VERIFY falló", "OP_VERIFY");
+        }
+    }
+
+    private void opReturn() throws ScriptException {
+        throw new ScriptException("OP_RETURN ejecutado", "OP_RETURN");
+    }
     
     /**
      * Verifica si un byte array representa un valor verdadero
@@ -598,122 +618,123 @@ private void opElse() throws ScriptException {
     }
 
     private int decodeNumber(byte[] data) {
-    if (data.length == 0) return 0;
+        if (data.length == 0) return 0;
 
-    int result = 0;
+        int result = 0;
 
-    for (int i = 0; i < data.length; i++) {
-        result |= (data[i] & 0xff) << (8 * i);
+        for (int i = 0; i < data.length; i++) {
+            result |= (data[i] & 0xff) << (8 * i);
+        }
+
+        // Revisar signo (último byte)
+        if ((data[data.length - 1] & 0x80) != 0) {
+            result &= ~(0x80 << (8 * (data.length - 1)));
+            result = -result;
+        }
+
+        return result;
     }
 
-    // Revisar signo (último byte)
-    if ((data[data.length - 1] & 0x80) != 0) {
-        result &= ~(0x80 << (8 * (data.length - 1)));
-        result = -result;
+    private void opAdd() throws ScriptException {
+        if (mainStack.size() < 2) {
+            throw new ScriptException("Stack insuficiente para OP_ADD", "OP_ADD");
+        }
+
+        int a = decodeNumber(mainStack.pop());
+        int b = decodeNumber(mainStack.pop());
+
+        int result = a + b;
+
+        mainStack.push(encodeNumber(result));
     }
 
-    return result;
-}
+    private void opSub() throws ScriptException {
+        if (mainStack.size() < 2) {
+            throw new ScriptException("Stack insuficiente para OP_SUB", "OP_SUB");
+        }
 
-private void opAdd() throws ScriptException {
-    if (mainStack.size() < 2) {
-        throw new ScriptException("Stack insuficiente para OP_ADD", "OP_ADD");
+        int a = decodeNumber(mainStack.pop());
+        int b = decodeNumber(mainStack.pop());
+
+        int result = b - a;
+
+        mainStack.push(encodeNumber(result));
     }
 
-    int a = decodeNumber(mainStack.pop());
-    int b = decodeNumber(mainStack.pop());
+    private void opLessThan() throws ScriptException {
+        if (mainStack.size() < 2) {
+            throw new ScriptException("Stack insuficiente para OP_LESSTHAN", "OP_LESSTHAN");
+        }
 
-    int result = a + b;
+        int a = decodeNumber(mainStack.pop());
+        int b = decodeNumber(mainStack.pop());
 
-    mainStack.push(encodeNumber(result));
-}
-
-private void opSub() throws ScriptException {
-    if (mainStack.size() < 2) {
-        throw new ScriptException("Stack insuficiente para OP_SUB", "OP_SUB");
+        mainStack.push((b < a) ? new byte[]{1} : new byte[0]);
     }
 
-    int a = decodeNumber(mainStack.pop());
-    int b = decodeNumber(mainStack.pop());
+    private void opGreaterThan() throws ScriptException {
+        if (mainStack.size() < 2) {
+            throw new ScriptException("Stack insuficiente para OP_GREATERTHAN", "OP_GREATERTHAN");
+        }
 
-    int result = b - a;
+        int a = decodeNumber(mainStack.pop());
+        int b = decodeNumber(mainStack.pop());
 
-    mainStack.push(encodeNumber(result));
-}
-
-private void opLessThan() throws ScriptException {
-    if (mainStack.size() < 2) {
-        throw new ScriptException("Stack insuficiente para OP_LESSTHAN", "OP_LESSTHAN");
+        mainStack.push((b > a) ? new byte[]{1} : new byte[0]);
     }
 
-    int a = decodeNumber(mainStack.pop());
-    int b = decodeNumber(mainStack.pop());
+    private void opLessThanOrEqual() throws ScriptException {
+        if (mainStack.size() < 2) {
+            throw new ScriptException("Stack insuficiente para OP_LESSTHANOREQUAL", "OP_LESSTHANOREQUAL");
+        }
 
-    mainStack.push((b < a) ? new byte[]{1} : new byte[0]);
-}
+        int a = decodeNumber(mainStack.pop());
+        int b = decodeNumber(mainStack.pop());
 
-private void opGreaterThan() throws ScriptException {
-    if (mainStack.size() < 2) {
-        throw new ScriptException("Stack insuficiente para OP_GREATERTHAN", "OP_GREATERTHAN");
+        mainStack.push((b <= a) ? new byte[]{1} : new byte[0]);
     }
 
-    int a = decodeNumber(mainStack.pop());
-    int b = decodeNumber(mainStack.pop());
+    private void opGreaterThanOrEqual() throws ScriptException {
+        if (mainStack.size() < 2) {
+            throw new ScriptException("Stack insuficiente para OP_GREATERTHANOREQUAL", "OP_GREATERTHANOREQUAL");
+        }
 
-    mainStack.push((b > a) ? new byte[]{1} : new byte[0]);
-}
+        int a = decodeNumber(mainStack.pop());
+        int b = decodeNumber(mainStack.pop());
 
-private void opLessThanOrEqual() throws ScriptException {
-    if (mainStack.size() < 2) {
-        throw new ScriptException("Stack insuficiente para OP_LESSTHANOREQUAL", "OP_LESSTHANOREQUAL");
+        mainStack.push((b >= a) ? new byte[]{1} : new byte[0]);
     }
 
-    int a = decodeNumber(mainStack.pop());
-    int b = decodeNumber(mainStack.pop());
+    private void opNumEqualVerify() throws ScriptException {
+        if (mainStack.size() < 2) {
+            throw new ScriptException("Stack insuficiente para OP_NUMEQUALVERIFY", "OP_NUMEQUALVERIFY");
+        }
 
-    mainStack.push((b <= a) ? new byte[]{1} : new byte[0]);
-}
+        int a = decodeNumber(mainStack.pop());
+        int b = decodeNumber(mainStack.pop());
 
-private void opGreaterThanOrEqual() throws ScriptException {
-    if (mainStack.size() < 2) {
-        throw new ScriptException("Stack insuficiente para OP_GREATERTHANOREQUAL", "OP_GREATERTHANOREQUAL");
+        if (a != b) {
+            throw new ScriptException("OP_NUMEQUALVERIFY falló", "OP_NUMEQUALVERIFY");
+        }
     }
 
-    int a = decodeNumber(mainStack.pop());
-    int b = decodeNumber(mainStack.pop());
 
-    mainStack.push((b >= a) ? new byte[]{1} : new byte[0]);
-}
+    private void opIf() throws ScriptException {
+        if (mainStack.isEmpty()) {
+            throw new ScriptException("Stack vacío para OP_IF", "OP_IF");
+        }
 
-private void opNumEqualVerify() throws ScriptException {
-    if (mainStack.size() < 2) {
-        throw new ScriptException("Stack insuficiente para OP_NUMEQUALVERIFY", "OP_NUMEQUALVERIFY");
+        boolean condition = isTrue(mainStack.pop());
+        executionStack.push(condition);
     }
 
-    int a = decodeNumber(mainStack.pop());
-    int b = decodeNumber(mainStack.pop());
+    private void opEndIf() throws ScriptException {
+        if (executionStack.isEmpty()) {
+            throw new ScriptException("OP_ENDIF sin OP_IF", "OP_ENDIF");
+        }
 
-    if (a != b) {
-        throw new ScriptException("OP_NUMEQUALVERIFY falló", "OP_NUMEQUALVERIFY");
+        executionStack.pop();
     }
-}
-
-private void opIf() throws ScriptException {
-    if (mainStack.isEmpty()) {
-        throw new ScriptException("Stack vacío para OP_IF", "OP_IF");
-    }
-
-    boolean condition = isTrue(mainStack.pop());
-    executionStack.push(condition);
-}
-
-private void opEndIf() throws ScriptException {
-    if (executionStack.isEmpty()) {
-        throw new ScriptException("OP_ENDIF sin OP_IF", "OP_ENDIF");
-    }
-
-    executionStack.pop();
-}
 
 
 }
